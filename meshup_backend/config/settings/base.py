@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = [host for host in config("ALLOWED_HOSTS", default="").split(",") if host]
+ALLOWED_HOSTS = [host.strip() for host in config("ALLOWED_HOSTS", default="").split(",") if host.strip()]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -141,7 +141,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    origin for origin in config("CORS_ALLOWED_ORIGINS", default="").split(",") if origin
+    origin.strip() for origin in config("CORS_ALLOWED_ORIGINS", default="").split(",") if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
 
