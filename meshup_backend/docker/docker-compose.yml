@@ -1,15 +1,15 @@
 version: '3.8'
 services:
-  # db:
-  #   image: postgres:14
-  #   environment:
-  #     POSTGRES_DB: meshup_db
-  #     POSTGRES_USER: meshup_user
-  #     POSTGRES_PASSWORD: 1
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: meshup_db
+      POSTGRES_USER: meshup_user
+      POSTGRES_PASSWORD: Xyn#2025_Mup
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
   
   redis:
     image: redis:7-alpine
