@@ -4,8 +4,8 @@ services:
     image: postgres:14
     environment:
       POSTGRES_DB: meshup_db
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: meshup_user
+      POSTGRES_PASSWORD: 1
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
