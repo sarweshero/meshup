@@ -6,10 +6,12 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from apps.servers.models import Server
 from apps.roles.models import ServerMember
 from apps.users.models import User
+from apps.auth.throttles import TaskThrottle
 
 from .models import Task, TaskAttachment, TaskComment
 from .serializers import (
@@ -24,6 +26,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     """ViewSet for managing tasks within servers."""
 
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = tuple(api_settings.DEFAULT_THROTTLE_CLASSES) + (TaskThrottle,)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["status", "priority", "assigned_to", "assigned_by", "channel"]
     search_fields = ["title", "description", "tags"]
@@ -36,7 +39,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         return TaskSerializer
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Task.objects.none()
+
         server_id = self.kwargs.get("server_id")
+        if not server_id:
+            return Task.objects.none()
+
         server = get_object_or_404(Server, id=server_id)
         if not ServerMember.objects.filter(
             server=server, user=self.request.user, is_banned=False

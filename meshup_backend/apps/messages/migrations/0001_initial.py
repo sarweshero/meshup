@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channels', '0002_initial'),
+    ('meshup_channels', '0002_initial'),
         ('roles', '0003_initial'),
     ]
 
@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 ('edited_at', models.DateTimeField(blank=True, null=True)),
                 ('deleted_at', models.DateTimeField(blank=True, null=True)),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='messages', to=settings.AUTH_USER_MODEL)),
-                ('channel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='messages', to='channels.channel')),
+                    ('channel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='messages', to='meshup_channels.channel')),
                 ('reply_to', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='replies', to='meshup_messages.message')),
             ],
             options={

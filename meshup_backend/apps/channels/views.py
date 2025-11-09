@@ -22,7 +22,13 @@ class ChannelViewSet(viewsets.ModelViewSet):
     ordering = ["position"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Channel.objects.none()
+
         server_id = self.kwargs.get("server_id")
+        if not server_id:
+            return Channel.objects.none()
+
         server = get_object_or_404(Server, id=server_id)
         self._ensure_member_access(server)
         return Channel.objects.filter(server=server).select_related("server", "created_by")

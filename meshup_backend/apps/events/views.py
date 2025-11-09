@@ -33,7 +33,13 @@ class EventViewSet(viewsets.ModelViewSet):
         return EventSerializer
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Event.objects.none()
+
         server_id = self.kwargs.get("server_id")
+        if not server_id:
+            return Event.objects.none()
+
         server = get_object_or_404(Server, id=server_id)
         if not ServerMember.objects.filter(
             server=server, user=self.request.user, is_banned=False

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channels', '0002_initial'),
+    ('meshup_channels', '0002_initial'),
         ('events', '0001_initial'),
         ('servers', '0001_initial'),
     ]
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='event',
             name='channel',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='events', to='channels.channel'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='events', to='meshup_channels.channel'),
         ),
         migrations.AddField(
             model_name='event',

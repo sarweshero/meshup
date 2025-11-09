@@ -11,36 +11,57 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channels', '0001_initial'),
-        ('servers', '0001_initial'),
+        ("meshup_channels", "0001_initial"),
+        ("servers", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='channel',
-            name='created_by',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_channels', to=settings.AUTH_USER_MODEL),
+            model_name="channel",
+            name="created_by",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="created_channels",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='channel',
-            name='parent_category',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='child_channels', to='channels.channel'),
+            model_name="channel",
+            name="parent_category",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="child_channels",
+                to="meshup_channels.channel",
+            ),
         ),
         migrations.AddField(
-            model_name='channel',
-            name='server',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='channels', to='servers.server'),
+            model_name="channel",
+            name="server",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="channels",
+                to="servers.server",
+            ),
         ),
         migrations.AddIndex(
-            model_name='channel',
-            index=models.Index(fields=['server', 'position'], name='channels_server__9628c2_idx'),
+            model_name="channel",
+            index=models.Index(
+                fields=["server", "position"],
+                name="channels_server__9628c2_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='channel',
-            index=models.Index(fields=['server', 'channel_type'], name='channels_server__5593f1_idx'),
+            model_name="channel",
+            index=models.Index(
+                fields=["server", "channel_type"],
+                name="channels_server__5593f1_idx",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='channel',
-            unique_together={('server', 'name')},
+            name="channel",
+            unique_together={("server", "name")},
         ),
     ]
