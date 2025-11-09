@@ -159,6 +159,10 @@ Partial updates accept any mutable field (e.g., `bio`, `status`, `custom_status`
 | POST | `/servers/{server_id}/leave/` | Leave a server (non-owners). |
 | GET | `/servers/{server_id}/roles/` | View roles (owner/admin or non-banned member). |
 | POST | `/servers/{server_id}/members/{member_id}/roles/` | Assign roles to a member (MANAGE_ROLES permission required). |
+| GET | `/servers/{server_id}/invites/` | List invites (MANAGE_MEMBERS). |
+| POST | `/servers/{server_id}/invites/` | Create an invite (body below). |
+| DELETE | `/servers/{server_id}/invites/{code}/` | Revoke an invite by code. |
+| POST | `/servers/invites/accept/` | Redeem an invite code to join. |
 
 ### Server Schema (`ServerSerializer`)
 ```json
@@ -181,6 +185,46 @@ Partial updates accept any mutable field (e.g., `bio`, `status`, `custom_status`
 **Creation Fields**: `name` (required), `description`, `region` (`us-east`, `us-west`, `eu-central`, `asia-pacific`), `is_public`, `verification_level`, `icon`, `banner`.
 
 Joining automatically assigns the default member role. Owners cannot leave their own server.
+
+### Create Invite (`POST /servers/{server_id}/invites/`)
+- **Body**:
+  ```json
+  {
+    "label": "Design Sprint",
+    "invitee_email": "guest@example.com",
+    "max_uses": 5,
+    "expires_at": "2025-11-15T23:59:00Z"
+  }
+  ```
+- **Response** `201`:
+  ```json
+  {
+    "id": "<uuid>",
+    "code": "ABCD1234EF",
+    "label": "Design Sprint",
+    "invitee_email": "guest@example.com",
+    "max_uses": 5,
+    "uses": 0,
+    "expires_at": "2025-11-15T23:59:00Z",
+    "revoked_at": null,
+    "created_at": "2025-11-07T14:00:00Z",
+    "is_active": true,
+    "server": { ... },
+    "inviter": { ... }
+  }
+  ```
+
+### Accept Invite (`POST /servers/invites/accept/`)
+- **Body**: `{ "code": "ABCD1234EF" }`
+- **Response** `200`:
+  ```json
+  {
+    "message": "Joined server successfully",
+    "server": { ... },
+    "invite": { ... updated usage ... }
+  }
+  ```
+
 
 ---
 

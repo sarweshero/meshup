@@ -1,6 +1,8 @@
 """Views for server management."""
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
@@ -17,8 +19,14 @@ from apps.roles.services import (
 )
 from apps.roles.utils import get_server_member, require_server_permission
 
-from .models import Server
-from .serializers import ServerCreateUpdateSerializer, ServerSerializer
+from .models import Server, ServerInvite
+from .serializers import (
+    ServerCreateUpdateSerializer,
+    ServerInviteAcceptSerializer,
+    ServerInviteCreateSerializer,
+    ServerInviteSerializer,
+    ServerSerializer,
+)
 
 
 class ServerViewSet(viewsets.ModelViewSet):
@@ -131,3 +139,81 @@ class ServerViewSet(viewsets.ModelViewSet):
             assign_default_member_role(member)
         response = RoleSerializer(member.roles.all(), many=True)
         return Response({"message": "Roles updated successfully", "roles": response.data})
+
+    @action(detail=True, methods=["get"], url_path="invites")
+    def list_invites(self, request, pk=None):
+        """List invites for a server."""
+
+        server = self.get_object()
+        require_server_permission(request.user, server, ServerPermission.MANAGE_MEMBERS)
+        invites = server.invites.order_by("-created_at")
+        serializer = ServerInviteSerializer(invites, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    @list_invites.mapping.post
+    def create_invite(self, request, pk=None):
+        """Create a new invite for this server."""
+
+        server = self.get_object()
+        require_server_permission(request.user, server, ServerPermission.MANAGE_MEMBERS)
+        serializer = ServerInviteCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invite = ServerInvite.objects.create(
+            server=server,
+            inviter=request.user,
+            code=ServerInvite.generate_code(),
+            **serializer.validated_data,
+        )
+        output = ServerInviteSerializer(invite, context={"request": request})
+        return Response(output.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["delete"], url_path=r"invites/(?P<code>[^/.]+)")
+    def revoke_invite(self, request, pk=None, code=None):
+        """Revoke a specific invite by code."""
+
+        server = self.get_object()
+        require_server_permission(request.user, server, ServerPermission.MANAGE_MEMBERS)
+        invite = get_object_or_404(ServerInvite, server=server, code=code)
+        if invite.revoked_at:
+            return Response({"detail": "Invite already revoked."}, status=status.HTTP_400_BAD_REQUEST)
+        invite.revoked_at = timezone.now()
+        invite.save(update_fields=["revoked_at"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["post"], url_path="invites/accept")
+    def accept_invite(self, request):
+        """Redeem an invite code to join a server."""
+
+        serializer = ServerInviteAcceptSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data["code"].strip().upper()
+        invite = ServerInvite.objects.filter(code=code).select_related("server").first()
+        if not invite or not invite.is_active():
+            return Response({"detail": "Invite is invalid or expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        server = invite.server
+        with transaction.atomic():
+            membership = ServerMember.objects.filter(user=request.user, server=server).select_for_update().first()
+            if membership:
+                if membership.is_banned:
+                    return Response({"detail": "You are banned from this server."}, status=status.HTTP_403_FORBIDDEN)
+                return Response(
+                    {
+                        "message": "Already a member",
+                        "server": ServerSerializer(server, context={"request": request}).data,
+                    }
+                )
+
+            membership = ServerMember.objects.create(user=request.user, server=server)
+            assign_default_member_role(membership)
+            invite.mark_used()
+            invite.save(update_fields=["uses", "revoked_at"])
+            server.member_count = ServerMember.objects.filter(server=server).count()
+            server.save(update_fields=["member_count"])
+
+        output = {
+            "message": "Joined server successfully",
+            "server": ServerSerializer(server, context={"request": request}).data,
+            "invite": ServerInviteSerializer(invite, context={"request": request}).data,
+        }
+        return Response(output, status=status.HTTP_200_OK)
