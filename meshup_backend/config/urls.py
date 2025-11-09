@@ -13,11 +13,12 @@ schema_view = get_schema_view(
         default_version="v1",
         description="Comprehensive API documentation for Meshup platform",
         terms_of_service="https://www.meshup.com/terms/",
-        contact=openapi.Contact(email="api@meshup.com"),
-        license=openapi.License(name="BSD License"),
+        # contact=openapi.Contact(email="api@meshup.com"),
+        # license=openapi.License(name="BSD License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    url=settings.SWAGGER_API_BASE_URL,
 )
 
 urlpatterns = [

@@ -1,5 +1,10 @@
 """Authentication views for Meshup platform."""
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -79,7 +84,40 @@ class PasswordResetRequestView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # TODO: Integrate email delivery for password reset tokens.
+        email = serializer.validated_data["email"]
+        user = User.objects.get(email=email)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        frontend_url = getattr(settings, "PASSWORD_RESET_REDIRECT_URL", "")
+        reset_link = None
+        if frontend_url:
+            separator = "&" if "?" in frontend_url else "?"
+            reset_link = f"{frontend_url}{separator}uid={uid}&token={token}"
+
+        subject = "Reset your Meshup password"
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None)
+        lines = [
+            f"Hi {user.username},",
+            "\nWe received a request to reset your Meshup password.",
+        ]
+        if reset_link:
+            lines.append(f"Use the link below to set a new password:\n{reset_link}\n")
+        lines.extend(
+            [
+                "If you prefer, you can also call the API directly by POSTing to /api/v1/auth/password-reset-confirm/",
+                "with the following payload:",
+                f"{{\"uid\": \"{uid}\", \"token\": \"{token}\", \"password\": \"<new_password>\", \"password_confirm\": \"<new_password>\"}}",
+                "\nIf you did not request this change, you can safely ignore this email.",
+                "\nThanks,",
+                "The Meshup Team",
+            ]
+        )
+
+        message = "\n".join(lines)
+        send_mail(subject, message, from_email, [email], fail_silently=False)
+
         return Response({"message": "Password reset email sent"}, status=status.HTTP_200_OK)
 
 
@@ -92,5 +130,17 @@ class PasswordResetConfirmView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # TODO: Implement token validation and password reset logic.
+        uidb64 = serializer.validated_data["uid"]
+        token = serializer.validated_data["token"]
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (ValueError, TypeError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid reset token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(serializer.validated_data["password"])
+        user.save(update_fields=["password"])
         return Response({"message": "Password has been reset successfully"}, status=status.HTTP_200_OK)

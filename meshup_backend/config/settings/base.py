@@ -99,6 +99,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+PASSWORD_RESET_REDIRECT_URL = config("PASSWORD_RESET_REDIRECT_URL", default="")
+SWAGGER_API_BASE_URL = config("SWAGGER_API_BASE_URL", default="https://flowdrix.tech/api/v1")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
@@ -144,6 +147,15 @@ CORS_ALLOWED_ORIGINS = [
     origin.strip() for origin in config("CORS_ALLOWED_ORIGINS", default="").split(",") if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_API_URL": SWAGGER_API_BASE_URL,
+    "USE_SESSION_AUTH": False,
+}
+
+REDOC_SETTINGS = {
+    "HIDE_HOSTNAME": False,
+}
 
 LOGGING = {
     "version": 1,
