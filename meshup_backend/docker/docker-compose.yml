@@ -20,9 +20,11 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+    command: >-
+      sh -c "python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 config.asgi:application"
     volumes:
       - ..:/app
+      - ../staticfiles:/app/staticfiles
     ports:
       - "8000:8000"
     depends_on:
