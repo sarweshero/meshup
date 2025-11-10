@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('servers', '0002_initial'),
-    ('meshup_channels', '0002_initial'),
+        ('channels', '0002_initial'),
         ('tasks', '0001_initial'),
     ]
 
@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='task',
             name='channel',
-            field=models.ForeignKey(blank=True, help_text='Optional channel association', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='tasks', to='meshup_channels.channel'),
+            field=models.ForeignKey(blank=True, help_text='Optional channel association', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='tasks', to='channels.channel'),
         ),
         migrations.AddField(
             model_name='task',

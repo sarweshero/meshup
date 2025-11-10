@@ -6,13 +6,11 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.settings import api_settings
 
 from apps.channels.models import Channel
 from apps.roles.constants import ServerPermission
 from apps.roles.utils import require_server_permission
 from apps.roles.models import ServerMember
-from apps.auth.throttles import MessageThrottle
 
 from .models import DirectMessage, DirectMessageMessage, Message, MessageReaction
 from .serializers import (
@@ -28,7 +26,6 @@ class MessageViewSet(viewsets.ModelViewSet):
     """Manage messages within channels."""
 
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = tuple(api_settings.DEFAULT_THROTTLE_CLASSES) + (MessageThrottle,)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["author", "is_pinned", "thread_id"]
     search_fields = ["content"]

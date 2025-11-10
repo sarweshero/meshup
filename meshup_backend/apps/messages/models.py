@@ -16,7 +16,7 @@ class Message(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    channel = models.ForeignKey("meshup_channels.Channel", on_delete=models.CASCADE, related_name="messages")
+    channel = models.ForeignKey("channels.Channel", on_delete=models.CASCADE, related_name="messages")
     author = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="messages")
     content = models.TextField()
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default="default")

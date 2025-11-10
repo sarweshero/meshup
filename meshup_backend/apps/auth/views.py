@@ -1,6 +1,4 @@
 """Authentication views for Meshup platform."""
-import logging
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -14,18 +12,14 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import LoginAttempt
 from .serializers import (
     CustomTokenObtainPairSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     UserRegistrationSerializer,
 )
-from .throttles import LoginThrottle, RegistrationThrottle
 
 User = get_user_model()
-
-logger = logging.getLogger(__name__)
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -34,12 +28,12 @@ class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [RegistrationThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        refresh = RefreshToken.for_user(user)
         return Response(
             {
                 "message": "User registered successfully",
@@ -47,6 +41,10 @@ class UserRegistrationView(generics.CreateAPIView):
                     "id": str(user.id),
                     "email": user.email,
                     "username": user.username,
+                },
+                "tokens": {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
                 },
             },
             status=status.HTTP_201_CREATED,
@@ -57,42 +55,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """API endpoint for JWT token generation (login)."""
 
     serializer_class = CustomTokenObtainPairSerializer
-    throttle_classes = [LoginThrottle]
-
-    def post(self, request, *args, **kwargs):  # type: ignore[override]
-        success = False
-        reason = ""
-        try:
-            response = super().post(request, *args, **kwargs)
-            success = response.status_code == status.HTTP_200_OK
-            if not success:
-                reason = str(response.data.get("detail", "Login failed"))
-            return response
-        except Exception as exc:  # pragma: no cover - propagate for DRF to handle
-            reason = str(exc)
-            raise
-        finally:
-            self._record_login_attempt(request, success, reason)
-
-    def _record_login_attempt(self, request, success: bool, reason: str) -> None:
-        email = (request.data or {}).get("email", "")
-        try:
-            LoginAttempt.objects.create(
-                email=email,
-                ip_address=self._client_ip(request) or "0.0.0.0",
-                user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
-                success=success,
-                failure_reason=reason[:255],
-            )
-        except Exception as exc:  # pragma: no cover - audit best effort
-            logger.debug("Unable to record login attempt for %s: %s", email, exc)
-
-    @staticmethod
-    def _client_ip(request) -> str:
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        if x_forwarded_for:
-            return x_forwarded_for.split(",")[0].strip()
-        return request.META.get("REMOTE_ADDR", "")
 
 
 class LogoutView(APIView):

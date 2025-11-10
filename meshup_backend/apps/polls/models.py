@@ -19,7 +19,7 @@ class Poll(models.Model):
     description = models.TextField(blank=True)
     server = models.ForeignKey("servers.Server", on_delete=models.CASCADE, related_name="polls")
     channel = models.ForeignKey(
-    "meshup_channels.Channel", on_delete=models.SET_NULL, null=True, blank=True, related_name="polls"
+        "channels.Channel", on_delete=models.SET_NULL, null=True, blank=True, related_name="polls"
     )
     created_by = models.ForeignKey(
         "users.User", on_delete=models.SET_NULL, null=True, related_name="created_polls"

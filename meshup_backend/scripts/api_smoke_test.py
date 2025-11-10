@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import random
 import sys
 import uuid
 from dataclasses import dataclass
@@ -34,7 +33,6 @@ class APISmokeTester:
     def __init__(self, base_url: str, email: Optional[str] = None, password: Optional[str] = None, *, verbose: bool = False) -> None:
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
-        self.session.headers["X-Forwarded-For"] = f"203.0.113.{random.randint(1, 254)}"
         self.verbose = verbose
         self.results: list[StepResult] = []
 
@@ -594,7 +592,7 @@ class APISmokeTester:
             f"/messages/channels/{self.channel_id}/{self.message_id}/",
             expected_status=(404,),
         )
-        if response is not None:
+        if response:
             self.message_id = None
             return True
         return False
