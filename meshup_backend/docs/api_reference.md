@@ -44,6 +44,10 @@ This document describes every publicly exposed REST endpoint under `https://<hos
       "id": "<uuid>",
       "email": "user@example.com",
       "username": "meshup_user"
+    },
+    "tokens": {
+      "refresh": "<token>",
+      "access": "<token>"
     }
   }
   ```

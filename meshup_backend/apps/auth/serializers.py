@@ -34,6 +34,29 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class RegisteredUserSerializer(serializers.Serializer):
+    """Serializer representing the public subset of user data returned post-registration."""
+
+    id = serializers.UUIDField()
+    email = serializers.EmailField()
+    username = serializers.CharField()
+
+
+class TokenPairSerializer(serializers.Serializer):
+    """Serializer for JWT token pair returned after registration/login."""
+
+    refresh = serializers.CharField()
+    access = serializers.CharField()
+
+
+class UserRegistrationResponseSerializer(serializers.Serializer):
+    """Serializer describing the registration API response body."""
+
+    message = serializers.CharField()
+    user = RegisteredUserSerializer()
+    tokens = TokenPairSerializer()
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Custom JWT token serializer with additional user data."""
 
