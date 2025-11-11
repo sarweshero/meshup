@@ -216,4 +216,11 @@ LOGGING = {
         "handlers": ["console", "file"],
         "level": "INFO",
     },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
 }
