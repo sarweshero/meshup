@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party apps
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "apps.polls",
     "apps.roles",
     "apps.settings",
+    "apps.realtime",
 ]
 
 MIDDLEWARE = [
@@ -68,6 +70,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 DATABASES = {
     "default": {
@@ -156,6 +159,25 @@ SWAGGER_SETTINGS = {
 REDOC_SETTINGS = {
     "HIDE_HOSTNAME": False,
 }
+
+CHANNEL_LAYER_BACKEND = config("CHANNEL_LAYER_BACKEND", default="redis").lower()
+if CHANNEL_LAYER_BACKEND == "inmemory":
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+else:
+    redis_host = config("REDIS_HOST", default="redis")
+    redis_port = config("REDIS_PORT", default=6379, cast=int)
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(redis_host, redis_port)],
+            },
+        }
+    }
 
 LOGGING = {
     "version": 1,

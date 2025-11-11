@@ -9,3 +9,8 @@ class MessagesConfig(AppConfig):
     name = "apps.messages"
     label = "meshup_messages"
     verbose_name = "Meshup Messages"
+
+    def ready(self) -> None:  # pragma: no cover - import for side effects only
+        from apps.realtime import signals  # noqa: F401
+
+        return super().ready()

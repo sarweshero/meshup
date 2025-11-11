@@ -33,6 +33,7 @@ urlpatterns = [
     path("api/v1/events/", include("apps.events.urls")),
     path("api/v1/polls/", include("apps.polls.urls")),
     path("api/v1/settings/", include("apps.settings.urls")),
+    path("api/v1/realtime/", include("apps.realtime.urls", namespace="realtime")),
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]

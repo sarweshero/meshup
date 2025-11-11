@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channels', '0001_initial'),
+    ('meshup_channels', '0001_initial'),
         ('servers', '0001_initial'),
     ]
 
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='channel',
             name='parent_category',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='child_channels', to='channels.channel'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='child_channels', to='meshup_channels.channel'),
         ),
         migrations.AddField(
             model_name='channel',

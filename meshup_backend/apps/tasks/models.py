@@ -35,7 +35,7 @@ class Task(models.Model):
     )
     server = models.ForeignKey("servers.Server", on_delete=models.CASCADE, related_name="tasks")
     channel = models.ForeignKey(
-        "channels.Channel",
+        "meshup_channels.Channel",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

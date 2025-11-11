@@ -338,6 +338,35 @@ The creator is automatically added. If a channel with the exact participant set 
 
 ---
 
+## Realtime WebSockets
+
+- **Endpoint**: `wss://flowdrix.tech/ws/v1/realtime/servers/{server_id}/channels/{channel_id}/`
+- **Auth**: Provide JWT access token via query string `?token=<access>` or header `Authorization: Bearer <access>`.
+- **Protocol**: JSON messages with an `event` key and optional `payload` object.
+
+### Client → Server Events
+
+| Event | Description | Payload |
+| --- | --- | --- |
+| `message.send` | Persist a channel message and broadcast it in real time. | `{ "content": "Hello team!", "reply_to": "<optional message uuid>" }` |
+| `typing.start` | Notify other members you started typing. | `{}` |
+| `typing.stop` | Notify other members you stopped typing. | `{}` |
+| `presence.ping` | Heartbeat to confirm the connection is alive. | `{}` |
+
+### Server → Client Events
+
+| Event | Trigger |
+| --- | --- |
+| `message.created` | Emitted when a message is saved via REST or websocket, includes serialized `Message` payload. |
+| `message.ack` | Immediate acknowledgement containing the saved message after `message.send`. |
+| `typing.start` / `typing.stop` | Broadcast from other users typing updates. |
+| `presence.join` / `presence.leave` | User connected or disconnected from the channel socket. |
+| `presence.alive` | Response to `presence.ping`, indicates the server connection remains active. |
+
+> **Tip:** REST-created messages also trigger the websocket `message.created` event, keeping HTTP and websocket clients synchronized.
+
+---
+
 ## Notes
 
 | Method | Path | Description |
