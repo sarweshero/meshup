@@ -182,9 +182,18 @@ else:
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "request_context": {
+            "()": "config.logging.RequestLogFilter",
+        }
+    },
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
+            "format": (
+                "{levelname} {asctime} module={module} client={client_ip} "
+                "user={username}({user_id}) method={http_method} path={full_path} "
+                "ua=\"{user_agent}\" referer=\"{referer}\" {message}"
+            ),
             "style": "{",
         },
     },
@@ -194,11 +203,13 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": BASE_DIR / "logs" / "meshup.log",
             "formatter": "verbose",
+            "filters": ["request_context"],
         },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+            "filters": ["request_context"],
         },
     },
     "root": {
