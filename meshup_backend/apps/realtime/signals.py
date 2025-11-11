@@ -6,9 +6,9 @@ from channels.layers import get_channel_layer
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from apps.messages.models import Message
+from apps.messages.models import DirectMessageMessage, Message
 
-from .utils import serialize_message_for_realtime
+from .utils import serialize_dm_message_for_realtime, serialize_message_for_realtime
 
 
 @receiver(post_save, sender=Message)
@@ -25,6 +25,28 @@ def broadcast_message_created(sender, instance: Message, created: bool, **kwargs
     payload = serialize_message_for_realtime(instance)
     async_to_sync(channel_layer.group_send)(
         f"realtime.channel.{instance.channel_id}",
+        {
+            "type": "realtime.message",
+            "event": "message.created",
+            "payload": payload,
+        },
+    )
+
+
+@receiver(post_save, sender=DirectMessageMessage)
+def broadcast_dm_message_created(sender, instance: DirectMessageMessage, created: bool, **kwargs):
+    """Broadcast direct message creation events to websocket subscribers."""
+
+    if not created:
+        return
+
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+
+    payload = serialize_dm_message_for_realtime(instance)
+    async_to_sync(channel_layer.group_send)(
+        f"realtime.dm.{instance.dm_channel_id}",
         {
             "type": "realtime.message",
             "event": "message.created",

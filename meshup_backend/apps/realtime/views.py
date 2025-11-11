@@ -62,6 +62,37 @@ class RealtimeMetadataView(APIView):
                                 "description": "Server -> client. Heartbeat acknowledgement reply.",
                             },
                         ],
+                        "direct_message_websocket_url": "wss://flowdrix.tech/ws/v1/realtime/direct-messages/{dm_id}/",
+                        "direct_message_events": [
+                            {
+                                "key": "message.send",
+                                "description": "Client -> server. Persists a DM and delivers to participants.",
+                            },
+                            {
+                                "key": "message.created",
+                                "description": "Server -> client. Emitted when a DM message is persisted.",
+                            },
+                            {
+                                "key": "typing.start",
+                                "description": "Client -> server. Indicates the user started typing in the DM.",
+                            },
+                            {
+                                "key": "typing.stop",
+                                "description": "Client -> server. Indicates the user stopped typing in the DM.",
+                            },
+                            {
+                                "key": "presence.join",
+                                "description": "Server -> client. Participant joined the DM websocket stream.",
+                            },
+                            {
+                                "key": "presence.leave",
+                                "description": "Server -> client. Participant disconnected from the DM stream.",
+                            },
+                            {
+                                "key": "presence.alive",
+                                "description": "Server -> client. Heartbeat reply for DM connections.",
+                            },
+                        ],
                     }
                 },
             )
@@ -101,6 +132,37 @@ class RealtimeMetadataView(APIView):
                 {
                     "key": "presence.alive",
                     "description": "Server -> client. Heartbeat reply confirming the user is still connected.",
+                },
+            ],
+            "direct_message_websocket_url": f"{base_ws_url.replace('/api/v1', '')}/ws/v1/realtime/direct-messages/{{dm_id}}/",
+            "direct_message_events": [
+                {
+                    "key": "message.send",
+                    "description": "Client -> server. Persists a direct message and broadcasts it to participants.",
+                },
+                {
+                    "key": "message.created",
+                    "description": "Server -> client. Published when a DM message is saved (REST or websocket).",
+                },
+                {
+                    "key": "typing.start",
+                    "description": "Client -> server. Indicates the user started typing in the DM conversation.",
+                },
+                {
+                    "key": "typing.stop",
+                    "description": "Client -> server. Indicates the user stopped typing in the DM conversation.",
+                },
+                {
+                    "key": "presence.join",
+                    "description": "Server -> client. Participant joined the DM websocket stream.",
+                },
+                {
+                    "key": "presence.leave",
+                    "description": "Server -> client. Participant disconnected from the DM stream.",
+                },
+                {
+                    "key": "presence.alive",
+                    "description": "Server -> client. DM heartbeat reply confirming the participant is still connected.",
                 },
             ],
         }

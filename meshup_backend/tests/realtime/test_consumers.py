@@ -9,6 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.asgi import application
 from apps.channels.models import Channel
+from apps.messages.models import DirectMessage
 from apps.roles.models import ServerMember
 from apps.servers.models import Server
 from apps.users.models import User
@@ -53,6 +54,54 @@ async def test_channel_websocket_message_flow(settings):
     broadcast_event = await asyncio.wait_for(communicator.receive_json_from(), timeout=2)
     assert broadcast_event["event"] == "message.created"
     assert broadcast_event["payload"]["content"] == "Hello realtime"
+
+    await communicator.disconnect()
+
+    channel_layer = get_channel_layer()
+    assert channel_layer is not None
+
+
+@pytest.mark.asyncio
+async def test_dm_websocket_message_flow(settings):
+    settings.CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+
+    user = await sync_to_async(User.objects.create_user)(
+        email="dm-socket@example.com", username="dm-socket", password="strongpass123"
+    )
+    other_user = await sync_to_async(User.objects.create_user)(
+        email="other@example.com", username="other", password="strongpass123"
+    )
+    dm = await sync_to_async(DirectMessage.objects.create)()
+    await sync_to_async(dm.participants.set)([user, other_user])
+
+    refresh = RefreshToken.for_user(user)
+    access_token = str(refresh.access_token)
+
+    communicator = WebsocketCommunicator(
+        application,
+        f"/ws/v1/realtime/direct-messages/{dm.id}/?token={access_token}",
+    )
+    connected, _ = await communicator.connect()
+    assert connected
+
+    join_event = await asyncio.wait_for(communicator.receive_json_from(), timeout=2)
+    assert join_event["event"] == "presence.join"
+
+    await communicator.send_json_to({"event": "message.send", "payload": {"content": "Hey there"}})
+
+    ack_event = await asyncio.wait_for(communicator.receive_json_from(), timeout=2)
+    assert ack_event["event"] == "message.ack"
+    assert ack_event["payload"]["content"] == "Hey there"
+    assert ack_event["payload"]["dm_channel"] == str(dm.id)
+
+    broadcast_event = await asyncio.wait_for(communicator.receive_json_from(), timeout=2)
+    assert broadcast_event["event"] == "message.created"
+    assert broadcast_event["payload"]["content"] == "Hey there"
+    assert broadcast_event["payload"]["dm_channel"] == str(dm.id)
 
     await communicator.disconnect()
 

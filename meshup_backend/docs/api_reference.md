@@ -340,11 +340,13 @@ The creator is automatically added. If a channel with the exact participant set 
 
 ## Realtime WebSockets
 
-- **Endpoint**: `wss://flowdrix.tech/ws/v1/realtime/servers/{server_id}/channels/{channel_id}/`
-- **Auth**: Provide JWT access token via query string `?token=<access>` or header `Authorization: Bearer <access>`.
-- **Protocol**: JSON messages with an `event` key and optional `payload` object.
+Meshup exposes websocket channels for both server channels and private direct messages. In both cases you must provide a JWT access token via query string `?token=<access>` or header `Authorization: Bearer <access>`, and payloads are JSON objects with an `event` key plus an optional `payload` dictionary.
 
-### Client → Server Events
+### Channel Streams
+
+- **Endpoint**: `wss://flowdrix.tech/ws/v1/realtime/servers/{server_id}/channels/{channel_id}/`
+
+#### Client → Server Events
 
 | Event | Description | Payload |
 | --- | --- | --- |
@@ -353,7 +355,7 @@ The creator is automatically added. If a channel with the exact participant set 
 | `typing.stop` | Notify other members you stopped typing. | `{}` |
 | `presence.ping` | Heartbeat to confirm the connection is alive. | `{}` |
 
-### Server → Client Events
+#### Server → Client Events
 
 | Event | Trigger |
 | --- | --- |
@@ -364,6 +366,29 @@ The creator is automatically added. If a channel with the exact participant set 
 | `presence.alive` | Response to `presence.ping`, indicates the server connection remains active. |
 
 > **Tip:** REST-created messages also trigger the websocket `message.created` event, keeping HTTP and websocket clients synchronized.
+
+### Direct Message Streams
+
+- **Endpoint**: `wss://flowdrix.tech/ws/v1/realtime/direct-messages/{dm_id}/`
+
+#### Client → Server Events
+
+| Event | Description | Payload |
+| --- | --- | --- |
+| `message.send` | Persist a direct message and push it to engaged participants. | `{ "content": "Hey there" }` |
+| `typing.start` | Notify the other participant(s) that you started typing. | `{}` |
+| `typing.stop` | Notify the other participant(s) that you stopped typing. | `{}` |
+| `presence.ping` | Heartbeat to confirm the connection is alive. | `{}` |
+
+#### Server → Client Events
+
+| Event | Trigger |
+| --- | --- |
+| `message.created` | Emitted when a DM is saved via REST or websocket, includes serialized `DirectMessageMessage` payload. |
+| `message.ack` | Immediate acknowledgement containing the saved DM after `message.send`. |
+| `typing.start` / `typing.stop` | Broadcast from other users typing in the DM. |
+| `presence.join` / `presence.leave` | Participant connected or disconnected from the DM socket. |
+| `presence.alive` | Response to `presence.ping`, indicates the DM connection remains active. |
 
 ---
 
