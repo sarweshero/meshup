@@ -36,6 +36,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         server = get_object_or_404(Server, id=self.kwargs.get("server_id"))
         require_server_permission(self.request.user, server, ServerPermission.MANAGE_CHANNELS)
+
         serializer.save(server=server, created_by=self.request.user)
 
     def update(self, request, *args, **kwargs):  # type: ignore[override]

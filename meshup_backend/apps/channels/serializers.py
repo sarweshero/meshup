@@ -15,7 +15,6 @@ class ChannelSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "channel_type",
-            "position",
             "is_private",
             "is_nsfw",
             "slowmode_delay",

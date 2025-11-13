@@ -105,6 +105,31 @@ MEDIA_ROOT = BASE_DIR / "media"
 PASSWORD_RESET_REDIRECT_URL = config("PASSWORD_RESET_REDIRECT_URL", default="")
 SWAGGER_API_BASE_URL = config("SWAGGER_API_BASE_URL", default="https://flowdrix.tech/api/v1")
 
+
+def _parse_region_choices(raw_value: str):
+    choices = []
+    for item in raw_value.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if ":" in item:
+            value, label = item.split(":", 1)
+        else:
+            value, label = item, item
+        value = value.strip()
+        label = label.strip() or value
+        if value:
+            choices.append((value, label))
+    if not choices:
+        choices.append(("global", "Global"))
+    return choices
+
+
+DEFAULT_SERVER_REGION_CHOICES = "us-east:US East,us-west:US West,eu-central:EU Central,asia-pacific:Asia Pacific"
+SERVER_REGION_CHOICES = _parse_region_choices(
+    config("SERVER_REGION_CHOICES", default=DEFAULT_SERVER_REGION_CHOICES)
+)
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {

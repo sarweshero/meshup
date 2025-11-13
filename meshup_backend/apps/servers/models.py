@@ -3,6 +3,7 @@ import secrets
 import string
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -10,12 +11,8 @@ from django.utils import timezone
 class Server(models.Model):
     """Server (workspace) model for team collaboration."""
 
-    REGION_CHOICES = (
-        ("us-east", "US East"),
-        ("us-west", "US West"),
-        ("eu-central", "EU Central"),
-        ("asia-pacific", "Asia Pacific"),
-    )
+    REGION_CHOICES = tuple(getattr(settings, "SERVER_REGION_CHOICES", []))
+    DEFAULT_REGION = REGION_CHOICES[0][0] if REGION_CHOICES else "global"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, db_index=True)
@@ -23,7 +20,11 @@ class Server(models.Model):
     icon = models.ImageField(upload_to="server_icons/", null=True, blank=True)
     banner = models.ImageField(upload_to="server_banners/", null=True, blank=True)
 
-    region = models.CharField(max_length=20, choices=REGION_CHOICES, default="us-east")
+    region = models.CharField(
+        max_length=50,
+        choices=REGION_CHOICES,
+        default=DEFAULT_REGION,
+    )
     is_public = models.BooleanField(default=False)
     verification_level = models.IntegerField(default=0)
 
